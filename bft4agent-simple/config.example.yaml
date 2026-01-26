@@ -1,0 +1,47 @@
+# BFT4Agent 配置示例文件
+# 使用方法：
+# 1. 复制此文件为 config.yaml: cp config.example.yaml config.yaml
+# 2. 根据你的需求修改配置
+# 3. 运行时加载配置: python main.py  # 会自动加载 config.yaml
+
+# ==================== Agent配置 ====================
+num_agents: 7                # Agent总数
+malicious_ratio: 0.14        # 恶意节点比例 (1/7 ≈ 14%)
+
+# ==================== LLM配置 ====================
+llm_backend: zhipu           # 选择LLM后端: mock | openai | zhipu | custom
+mock_accuracy: 0.85          # Mock LLM准确率（仅在使用mock时有效）
+api_timeout: 30              # API调用超时时间（秒）
+
+# LLM API详细配置
+llm_api_config:
+  # OpenAI GPT配置
+  openai:
+    api_key: "your-openai-api-key"  # 请替换为你的OpenAI API Key
+    base_url: null                   # 可选：自定义端点（如代理URL）
+    model: "gpt-3.5-turbo"           # 模型名称
+
+  # 智谱AI GLM配置（推荐用于中文场景）
+  zhipu:
+    api_key: "your-zhipu-api-key"    # 请替换为你的智谱API Key
+    model: "glm-4.7"                 # 模型名称：glm-4.7, glm-4-plus, glm-4-flash等
+
+  # 自定义API配置（OpenAI兼容格式）
+  custom:
+    api_key: "your-custom-api-key"
+    base_url: "https://your-api-endpoint.com/v1"
+    model: "your-model-name"
+
+# ==================== 网络配置 ====================
+network_delay: [10, 100]     # 网络延迟范围 (最小值, 最大值) 单位: 毫秒
+packet_loss: 0.01            # 丢包率 (1%)
+
+# ==================== 共识配置 ====================
+timeout: 5.0                 # 超时时间（秒）
+max_retries: 3               # 最大重试次数
+quorum_ratio: 0.6666666667   # 法定人数比例 (2/3)
+
+# ==================== 实验配置 ====================
+output_dir: "data/results"   # 结果输出目录
+save_intermediate: true      # 是否保存中间结果
+random_seed: 42              # 随机种子（用于可重复实验）

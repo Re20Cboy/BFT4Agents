@@ -1,0 +1,66 @@
+{
+  "dataset_name": "simple_math",
+  "description": "Simple math tasks for testing BFT4Agent",
+  "tasks": [
+    {
+      "task_id": "math_001",
+      "content": "2 + 2 = ?",
+      "type": "math",
+      "ground_truth": "4"
+    },
+    {
+      "task_id": "math_002",
+      "content": "10 - 3 = ?",
+      "type": "math",
+      "ground_truth": "7"
+    },
+    {
+      "task_id": "math_003",
+      "content": "5 * 6 = ?",
+      "type": "math",
+      "ground_truth": "30"
+    },
+    {
+      "task_id": "math_004",
+      "content": "100 / 10 = ?",
+      "type": "math",
+      "ground_truth": "10"
+    },
+    {
+      "task_id": "math_005",
+      "content": "23 * 47 = ?",
+      "type": "math",
+      "ground_truth": "1081"
+    },
+    {
+      "task_id": "math_006",
+      "content": "15 + 27 = ?",
+      "type": "math",
+      "ground_truth": "42"
+    },
+    {
+      "task_id": "math_007",
+      "content": "8 * 9 = ?",
+      "type": "math",
+      "ground_truth": "72"
+    },
+    {
+      "task_id": "math_008",
+      "content": "144 - 56 = ?",
+      "type": "math",
+      "ground_truth": "88"
+    },
+    {
+      "task_id": "math_009",
+      "content": "200 / 4 = ?",
+      "type": "math",
+      "ground_truth": "50"
+    },
+    {
+      "task_id": "math_010",
+      "content": "12 * 12 = ?",
+      "type": "math",
+      "ground_truth": "144"
+    }
+  ]
+}
