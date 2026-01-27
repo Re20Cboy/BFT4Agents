@@ -13,8 +13,14 @@ class MockLLM(BaseLLM):
         time.sleep(random.uniform(0.1, 0.5))
         reasoning, answer = self._solve_math(question)
 
+        # 调试输出
+        print(f"[MockLLM.generate] 输入问题: {repr(question)}")
+        print(f"[MockLLM.generate] 解析结果: reasoning={reasoning}, answer={answer}")
+
         if random.random() > self.accuracy:
+            old_answer = answer
             answer = str(int(answer) + random.randint(1, 10))
+            print(f"[MockLLM.generate] 模拟幻觉: {old_answer} -> {answer}")
 
         reasoning_steps = [
             "步骤1: 分析问题",
@@ -57,13 +63,50 @@ class MockLLM(BaseLLM):
         return "Y"
 
     def _solve_math(self, question: str) -> Tuple[str, str]:
+        """
+        解析数学问题并计算答案
+
+        支持两种格式：
+        1. 纯数学表达式："2 + 2 = ?"
+        2. 带system prompt的格式："你是一位数学专家...\n\n问题: 2 + 2 = ?"
+        """
         try:
-            if "=" in question:
-                expr = question.split("=")[0].strip()
-                result = eval(expr)
-                return f"计算 {expr} = {result}", str(result)
-        except:
-            pass
+            # 提取数学表达式
+            math_expr = None
+
+            # 方法1：查找 "问题:" 或 "Question:" 后面的内容
+            if "问题:" in question or "Question:" in question:
+                # 分割字符串，取最后一部分（实际的问题）
+                parts = question.split("问题:" if "问题:" in question else "Question:")
+                if len(parts) > 1:
+                    actual_question = parts[-1].strip()
+                    # 提取等号前面的表达式
+                    if "=" in actual_question:
+                        expr = actual_question.split("=")[0].strip()
+                        math_expr = expr
+
+            # 方法2：如果没有标记，尝试直接从整个字符串中提取
+            if math_expr is None and "=" in question:
+                # 取最后一个等号前面的部分
+                parts = question.rsplit("=", 1)
+                if len(parts) > 1:
+                    # 从这部分中提取数学表达式（找最后一个运算符后面的内容）
+                    before_eq = parts[0].strip()
+                    # 尝试从后往前找数字开始的位置
+                    import re
+                    # 匹配数学表达式（数字 运算符 数字）
+                    match = re.search(r'(\d+(?:\.\d+)?\s*[+\-*/]\s*\d+(?:\.\d+)?)', before_eq)
+                    if match:
+                        math_expr = match.group(1)
+
+            # 计算表达式
+            if math_expr:
+                result = eval(math_expr)
+                return f"计算 {math_expr} = {result}", str(result)
+
+        except Exception as e:
+            print(f"[MockLLM._solve_math] 解析失败: {e}, question={repr(question)}")
+
         return "无法解析问题", "0"
 
     def _extract_and_validate_answer(self, task_id: str, proposed_answer: str) -> bool:

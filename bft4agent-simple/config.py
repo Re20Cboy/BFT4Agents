@@ -85,10 +85,10 @@ CONFIG = {
     "assign_roles_randomly": True,  # 是否随机分配角色（False则按顺序分配）
 
     # LLM配置
-    "llm_backend": "mock",  # mock | openai | zhipu | qwen | custom
-    "mock_accuracy": 0.85,  # Mock LLM准确率
+    "llm_backend": "qwen",  # mock | openai | zhipu | qwen | custom
+    "mock_accuracy": 1.0,  # Mock LLM准确率（诚实节点100%生成正确答案）
     "api_timeout": 30,
-    "single_task_mode": True,  # 单任务模式（True=单任务用于测试，False=多任务用于实验）
+    "single_task_mode": False,  # 单任务模式（True=单任务用于测试，False=多任务用于实验）
 
     # LLM API配置（用于真实LLM）
     "llm_api_config": {
@@ -122,7 +122,7 @@ CONFIG = {
     "packet_loss": 0.01,  # 1% 丢包率
 
     # 共识配置
-    "timeout": 5.0,  # 超时时间（秒）
+    "timeout": 30.0,  # 超时时间（秒）- 增加到30秒以适应真实LLM API调用速度
     "max_retries": 3,  # 最大重试次数
     "quorum_ratio": 2.0 / 3.0,  # 法定人数比例
 

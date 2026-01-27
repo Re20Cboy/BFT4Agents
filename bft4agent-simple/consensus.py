@@ -332,6 +332,9 @@ class BFT4Agent:
             print(f"\n[视图 {self.current_view}] 主节点: {primary_id}")
 
             try:
+                # === 修复BUG: 重置所有agent和replica的状态 ===
+                self._reset_all_states()
+
                 # 清空所有副本的消息日志
                 for replica in self.replicas.values():
                     replica.message_log.clear()
@@ -447,6 +450,11 @@ class BFT4Agent:
         # 设置Agent的role为leader（propose方法需要）
         primary_replica.agent.role = "leader"
 
+        # 打印节点信息
+        malicious_flag = " [恶意]" if primary_replica.agent.is_malicious else ""
+        specialty = primary_replica.agent.role_config.get("name", "通用")
+        print(f"[{primary_id}] 角色信息: {specialty}, is_malicious={primary_replica.agent.is_malicious}{malicious_flag}")
+
         # 分配序列号
         sequence_number = self._assign_sequence_number()
         print(f"[{primary_id}] 分配序列号: {sequence_number}")
@@ -513,8 +521,21 @@ class BFT4Agent:
             thread.start()
 
         # 等待所有副本完成PREPARE阶段
+        print(f"[PREPARE] 等待 {len(threads)} 个节点完成评价（超时: {self.timeout}秒）...")
+        completed_threads = 0
         for thread in threads:
             thread.join(timeout=self.timeout)
+            if not thread.is_alive():
+                completed_threads += 1
+
+        print(f"[PREPARE] {completed_threads}/{len(threads)} 个节点在超时前完成")
+
+        # 额外等待一段时间，收集可能延迟到达的消息
+        # 这是因为真实LLM API调用可能比timeout慢，但我们仍然希望收集到足够多的投票
+        if completed_threads < len(threads):
+            wait_time = min(5.0, self.timeout)  # 最多额外等待5秒
+            print(f"[PREPARE] 额外等待 {wait_time}秒 以收集更多投票...")
+            time.sleep(wait_time)
 
         # 模拟网络消息传递：将所有PREPARE消息分发给所有副本
         print(f"[PREPARE] 分发{len(prepare_messages)}条PREPARE消息到所有节点")
@@ -671,8 +692,20 @@ class BFT4Agent:
             thread.start()
 
         # 等待所有节点完成COMMIT阶段
+        print(f"[COMMIT] 等待 {len(threads)} 个节点完成提交（超时: {self.timeout}秒）...")
+        completed_threads = 0
         for thread in threads:
             thread.join(timeout=self.timeout)
+            if not thread.is_alive():
+                completed_threads += 1
+
+        print(f"[COMMIT] {completed_threads}/{len(threads)} 个节点在超时前完成")
+
+        # 额外等待一段时间，收集可能延迟到达的消息
+        if completed_threads < len(threads):
+            wait_time = min(5.0, self.timeout)  # 最多额外等待5秒
+            print(f"[COMMIT] 额外等待 {wait_time}秒 以收集更多投票...")
+            time.sleep(wait_time)
 
         # 模拟网络消息传递：将所有COMMIT消息分发给所有副本
         print(f"[COMMIT] 分发{len(commit_messages)}条COMMIT消息到所有节点")
@@ -789,6 +822,26 @@ class BFT4Agent:
 
         # 简化实现：直接增加视图号
         time.sleep(0.5)  # 模拟视图更换延迟
+
+    def _reset_all_states(self):
+        """
+        重置所有agent和replica的状态
+
+        在视图切换时调用，确保：
+        1. 所有agent的role重置为"backup"
+        2. 所有replica的is_primary重置为False
+        3. 所有replica的state重置为IDLE
+        """
+        print(f"[状态重置] 重置所有节点状态")
+
+        # 重置所有agent的role
+        for agent in self.agents:
+            agent.role = "backup"
+
+        # 重置所有replica的状态
+        for replica in self.replicas.values():
+            replica.is_primary = False
+            replica.state = ReplicaState.IDLE
 
     def get_stats(self) -> Dict:
         """获取统计信息"""
