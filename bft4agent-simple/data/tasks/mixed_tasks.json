@@ -1,0 +1,76 @@
+{
+  "dataset_name": "mixed_benchmark",
+  "description": "Mixed task set for comprehensive testing of BFT4Agent",
+  "tasks": [
+    {
+      "task_id": "math_001",
+      "content": "2 + 2 = ?",
+      "type": "math",
+      "ground_truth": "4",
+      "difficulty": "easy"
+    },
+    {
+      "task_id": "math_002",
+      "content": "23 * 47 = ?",
+      "type": "math",
+      "ground_truth": "1081",
+      "difficulty": "medium"
+    },
+    {
+      "task_id": "math_003",
+      "content": "144 / 12 = ?",
+      "type": "math",
+      "ground_truth": "12",
+      "difficulty": "easy"
+    },
+    {
+      "task_id": "logic_001",
+      "content": "如果所有的鸟都会飞，企鹅是鸟，那么企鹅会飞吗？请说明理由。",
+      "type": "logic",
+      "ground_truth": "不会，企鹅是例外",
+      "difficulty": "medium"
+    },
+    {
+      "task_id": "logic_002",
+      "content": "小明比小红大3岁，小红比小刚大2岁。请问小明和小刚谁大？大多少岁？",
+      "type": "logic",
+      "ground_truth": "小明大5岁",
+      "difficulty": "easy"
+    },
+    {
+      "task_id": "math_004",
+      "content": "15 * 27 = ?",
+      "type": "math",
+      "ground_truth": "405",
+      "difficulty": "medium"
+    },
+    {
+      "task_id": "logic_003",
+      "content": "一个盒子里面有红球和蓝球。如果摸出红球的概率是0.6，摸出蓝球的概率是多少？",
+      "type": "logic",
+      "ground_truth": "0.4",
+      "difficulty": "easy"
+    },
+    {
+      "task_id": "math_005",
+      "content": "200 / 4 = ?",
+      "type": "math",
+      "ground_truth": "50",
+      "difficulty": "easy"
+    },
+    {
+      "task_id": "logic_004",
+      "content": "如果今天下雨，我就不带伞。今天我带了伞，请问今天下雨了吗？",
+      "type": "logic",
+      "ground_truth": "命题无法确定",
+      "difficulty": "hard"
+    },
+    {
+      "task_id": "math_006",
+      "content": "12 * 12 = ?",
+      "type": "math",
+      "ground_truth": "144",
+      "difficulty": "easy"
+    }
+  ]
+}

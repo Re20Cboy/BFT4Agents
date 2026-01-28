@@ -1,0 +1,62 @@
+{
+  "dataset_name": "simple_math",
+  "description": "简单数学任务集(用于快速测试)",
+  "tasks": [
+    {
+      "task_id": "math_001",
+      "content": "2 + 2 = ?",
+      "type": "math",
+      "difficulty": "easy",
+      "ground_truth": "4"
+    },
+    {
+      "task_id": "math_002",
+      "content": "15 * 7 = ?",
+      "type": "math",
+      "difficulty": "medium",
+      "ground_truth": "105"
+    },
+    {
+      "task_id": "math_003",
+      "content": "100 / 4 = ?",
+      "type": "math",
+      "difficulty": "easy",
+      "ground_truth": "25"
+    },
+    {
+      "task_id": "math_004",
+      "content": "23 * 47 = ?",
+      "type": "math",
+      "difficulty": "medium",
+      "ground_truth": "1081"
+    },
+    {
+      "task_id": "math_005",
+      "content": "144 / 12 = ?",
+      "type": "math",
+      "difficulty": "easy",
+      "ground_truth": "12"
+    },
+    {
+      "task_id": "math_006",
+      "content": "256 + 128 = ?",
+      "type": "math",
+      "difficulty": "easy",
+      "ground_truth": "384"
+    },
+    {
+      "task_id": "math_007",
+      "content": "1024 - 256 = ?",
+      "type": "math",
+      "difficulty": "medium",
+      "ground_truth": "768"
+    },
+    {
+      "task_id": "math_008",
+      "content": "45 * 23 = ?",
+      "type": "math",
+      "difficulty": "hard",
+      "ground_truth": "1035"
+    }
+  ]
+}

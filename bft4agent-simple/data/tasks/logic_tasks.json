@@ -1,0 +1,36 @@
+{
+  "dataset_name": "logic_reasoning",
+  "description": "Logic reasoning tasks for testing BFT4Agent",
+  "tasks": [
+    {
+      "task_id": "logic_001",
+      "content": "如果所有的鸟都会飞，企鹅是鸟，那么企鹅会飞吗？请说明理由。",
+      "type": "logic",
+      "ground_truth": "不会，因为企鹅是例外"
+    },
+    {
+      "task_id": "logic_002",
+      "content": "小明比小红大3岁，小红比小刚大2岁。请问小明和小刚谁大？大多少岁？",
+      "type": "logic",
+      "ground_truth": "小明大5岁"
+    },
+    {
+      "task_id": "logic_003",
+      "content": "一个盒子里面有红球和蓝球。如果摸出红球的概率是0.6，摸出蓝球的概率是多少？",
+      "type": "logic",
+      "ground_truth": "0.4"
+    },
+    {
+      "task_id": "logic_004",
+      "content": "如果今天下雨，我就不带伞。今天我带了伞，请问今天下雨了吗？",
+      "type": "logic",
+      "ground_truth": "不一定，命题无法确定"
+    },
+    {
+      "task_id": "logic_005",
+      "content": "一个数列：2, 4, 6, 8, ...，请问第10个数是多少？",
+      "type": "logic",
+      "ground_truth": "20"
+    }
+  ]
+}

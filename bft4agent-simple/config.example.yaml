@@ -41,6 +41,24 @@ timeout: 5.0                 # 超时时间（秒）
 max_retries: 3               # 最大重试次数
 quorum_ratio: 0.6666666667   # 法定人数比例 (2/3)
 
+# ==================== 任务配置 ====================
+tasks:
+  # 任务文件路径（相对于 data/tasks/ 或绝对路径）
+  file: "math_tasks.json"
+
+  # 数据集名称（用于日志记录）
+  dataset_name: "simple_math"
+
+  # 选择任务数量（null 表示使用全部任务）
+  num_tasks: 3
+
+  # 是否打乱任务顺序
+  shuffle: false
+
+  # 指定要运行的 task_id 列表（优先级高于 num_tasks）
+  # 例如: ["math_001", "math_005", "logic_002"]
+  task_ids: null
+
 # ==================== 实验配置 ====================
 output_dir: "data/results"   # 结果输出目录
 save_intermediate: true      # 是否保存中间结果

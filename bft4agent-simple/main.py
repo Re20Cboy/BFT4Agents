@@ -11,6 +11,7 @@ from agents import create_agents
 from network import Network
 from consensus import BFT4Agent
 from llm_new import LLMCaller
+from tasks import TaskLoader
 
 
 def print_header(title: str):
@@ -123,25 +124,24 @@ def main():
         max_retries=config["max_retries"],
     )
 
-    # 运行示例task
-    print_header("开始consensus流程")
+    # 加载任务
+    print_header("加载任务")
 
-    # 检查是否使用单任务模式
-    single_task_mode = config.get("single_task_mode", False)
-
-    if single_task_mode:
-        # 单任务模式（用于测试）
-        print("\n[INFO] 使用单任务模式进行测试")
-        tasks = [
-            {"content": "2 + 2 = ?", "type": "math"},
-        ]
-    else:
-        # 多任务模式（默认）
+    try:
+        task_loader = TaskLoader(config)
+        tasks = task_loader.load()
+    except Exception as e:
+        print(f"\n[ERROR] 任务加载失败: {e}")
+        print("\n[INFO] 使用默认任务（向后兼容）")
+        # 向后兼容：如果加载失败，使用默认任务
         tasks = [
             {"content": "2 + 2 = ?", "type": "math"},
             {"content": "23 * 47 = ?", "type": "math"},
             {"content": "144 / 12 = ?", "type": "math"},
         ]
+
+    # 运行示例task
+    print_header("开始共识流程")
 
     results = []
 
@@ -153,7 +153,7 @@ def main():
         result = bft.run(task)
         results.append(result)
 
-        time.sleep(0.2)  # task间暂停
+        time.sleep(0.1)  # task间暂停
 
     # statsresult
     print_header("experimentresultstats")

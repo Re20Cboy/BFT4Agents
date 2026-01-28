@@ -60,10 +60,25 @@ bft4agent-simple/.env
 # Data and Results
 data/results/
 data/tasks/
+ex/results/
 *.log
 logs/
 *.csv
 *.json.bak
+
+# Experiment Output
+ex/results/data/
+ex/results/figures/
+ex/**/experiment_*.json
+ex/**/experiment_latest.json
+ex/**/*.png
+ex/**/*.jpg
+ex/**/*.jpeg
+
+# Experiment Temporary Files
+ex/**/experiment_broken.py
+ex/**/temp_*.py
+ex/**/temp_function.txt
 
 # Testing and Coverage
 .pytest_cache/

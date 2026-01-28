@@ -8,7 +8,7 @@ variables:
   num_agents: [4, 7, 10, 20]          # 节点数
   malicious_ratio: [0.0, 0.14]    # 恶意节点比例
   network_delay: [[10, 100]]      # 网络延迟(ms)
-  llm_backend: ["mock"]           # LLM后端
+  llm_backend: ["qwen"]           # LLM后端
 
 # 任务配置
 tasks:
@@ -21,3 +21,16 @@ global:
   timeout: 30.0
   max_retries: 3
   mock_accuracy: 1.0
+
+# LLM API配置
+llm_api_config:
+  qwen:
+    api_key: "${QWEN_API_KEY}"
+    app_id: "${QWEN_APP_ID}"
+    enable_thinking: false
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+  deepseek:
+    api_key: "${DEEPSEEK_API_KEY}"
+    model: "deepseek-chat"

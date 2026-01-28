@@ -54,25 +54,25 @@ CONFIG = {
         {
             "name": "数学专家",
             "specialty": "math",
-            "system_prompt": "你是一位数学专家，擅长精确计算和数学推理。请认真分析问题，给出准确的计算过程和答案。",
+            "system_prompt": "你是一位数学专家，擅长精确计算和数学推理。请认真分析问题，给出准确且精简的计算过程和答案。",
             "validation_style": "strict"  # 验证风格：strict（严格）、balanced（平衡）、lenient（宽松）
         },
         {
             "name": "逻辑分析师",
             "specialty": "logic",
-            "system_prompt": "你是一位逻辑分析师，擅长分析问题的逻辑结构和推理链条。请检查推理过程是否严密，逻辑是否清晰。",
+            "system_prompt": "你是一位逻辑分析师，擅长分析问题的逻辑结构和推理链条。请准确且精简地检查推理过程是否严密，逻辑是否清晰。",
             "validation_style": "balanced"
         },
         {
             "name": "验证专家",
             "specialty": "verification",
-            "system_prompt": "你是一位验证专家，擅长发现推理中的错误和漏洞。请仔细检查答案的准确性和推理的合理性。",
+            "system_prompt": "你是一位验证专家，擅长发现推理中的错误和漏洞。请准确且精简地检查答案的准确性和推理的合理性。",
             "validation_style": "strict"
         },
         {
             "name": "综合思考者",
             "specialty": "general",
-            "system_prompt": "你是一位综合思考者，能够从多个角度分析问题。请全面考虑问题，给出合理的答案。",
+            "system_prompt": "你是一位综合思考者，能够从多个角度分析问题。请全面考虑问题，给出准确且精简的答案。",
             "validation_style": "balanced"
         },
         {
@@ -125,6 +125,15 @@ CONFIG = {
     "timeout": 30.0,  # 超时时间（秒）- 增加到30秒以适应真实LLM API调用速度
     "max_retries": 3,  # 最大重试次数
     "quorum_ratio": 2.0 / 3.0,  # 法定人数比例
+
+    # 任务配置
+    "tasks": {
+        "file": "math_tasks.json",  # 任务文件路径
+        "dataset_name": "simple_math",  # 数据集名称
+        "num_tasks": 3,  # 选择任务数量（null 表示全部）
+        "shuffle": False,  # 是否打乱顺序
+        "task_ids": None,  # 指定 task_id 列表（优先级高于 num_tasks）
+    },
 
     # 实验配置
     "output_dir": "data/results",

@@ -41,7 +41,7 @@ class QwenLLM(BaseLLM):
         Returns:
             (推理过程列表, 最终答案)
         """
-        prompt = f"""请解决以下问题，并展示简明的推理过程:
+        prompt = f"""请解决以下问题，并快速展示简洁简短的推理过程:
 问题: {question}
 
 请按格式回答:

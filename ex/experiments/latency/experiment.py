@@ -7,7 +7,8 @@ import os
 import json
 import time
 import yaml
-from typing import Dict, List
+import re
+from typing import Dict, List, Any
 from datetime import datetime
 from pathlib import Path
 
@@ -18,6 +19,26 @@ sys.path.insert(0, project_root)
 from ex.utils import import_helper, Plotter
 from ex.experiments.latency.tracker import LatencyTracker
 from ex.experiments.latency.consensus import BFT4AgentWithLatency
+
+
+def expand_env_vars(config_value: Any) -> Any:
+    """
+    递归展开配置中的环境变量
+    支持 ${VAR_NAME} 格式
+    """
+    if isinstance(config_value, str):
+        # 匹配 ${VAR_NAME} 格式
+        def replace_env_var(match):
+            var_name = match.group(1)
+            return os.environ.get(var_name, match.group(0))
+
+        return re.sub(r'\$\{([^}]+)\}', replace_env_var, config_value)
+    elif isinstance(config_value, dict):
+        return {k: expand_env_vars(v) for k, v in config_value.items()}
+    elif isinstance(config_value, list):
+        return [expand_env_vars(item) for item in config_value]
+    else:
+        return config_value
 
 
 class LatencyExperiment:
@@ -111,7 +132,14 @@ class LatencyExperiment:
             if llm_backend == "mock":
                 llm = import_helper.LLMCaller(backend="mock", accuracy=self.config['global']['mock_accuracy'])
             else:
-                llm = import_helper.LLMCaller(backend=llm_backend)
+                # 从配置中获取LLM API配置
+                llm_api_config = self.config.get('llm_api_config', {}).get(llm_backend, {})
+
+                # 展开环境变量（如 ${QWEN_API_KEY} -> actual value）
+                llm_api_config = expand_env_vars(llm_api_config)
+
+                # 创建LLM，传递backend和API配置参数
+                llm = import_helper.LLMCaller(backend=llm_backend, **llm_api_config)
 
             # 创建Agent
             agents = import_helper.create_agents(
