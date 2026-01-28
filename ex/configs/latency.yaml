@@ -1,0 +1,23 @@
+# 延迟实验配置文件
+
+experiment_name: "latency_experiment"
+description: "端到端延迟测试"
+
+# 实验变量
+variables:
+  num_agents: [4, 7, 10, 20]          # 节点数
+  malicious_ratio: [0.0, 0.14]    # 恶意节点比例
+  network_delay: [[10, 100]]      # 网络延迟(ms)
+  llm_backend: ["mock"]           # LLM后端
+
+# 任务配置
+tasks:
+  file: "math_tasks_simple.json"
+  num_tasks: 5
+  shuffle: false
+
+# 全局配置
+global:
+  timeout: 30.0
+  max_retries: 3
+  mock_accuracy: 1.0
