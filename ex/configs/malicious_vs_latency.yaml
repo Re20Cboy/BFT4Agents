@@ -13,13 +13,13 @@ variables:
 # 任务配置
 tasks:
   file: "math_tasks_simple.json"
-  num_tasks: 5                        # 每个配置运行5个任务
+  num_tasks: 3                        # 每个配置运行3个任务（随机选择）
   shuffle: false
 
 # 全局配置
 global:
   timeout: 30.0
-  max_retries: 3
+  max_retries: 15                     # 增加到15次，因为恶意节点多时可能需要更多视图切换
   mock_accuracy: 1.0
 
 # LLM API配置

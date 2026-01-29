@@ -291,12 +291,12 @@ class MaliciousVsLatencyExperiment:
             },
             'tasks': {
                 'file': 'math_tasks_simple.json',
-                'num_tasks': 3,
+                'num_tasks': 3,  # 改为3个任务
                 'shuffle': False
             },
             'global': {
                 'timeout': 30.0,
-                'max_retries': 3,
+                'max_retries': 15,  # 增加到15次
                 'mock_accuracy': 1.0
             }
         }
