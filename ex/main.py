@@ -3,6 +3,7 @@ BFT4Agent 实验统一入口
 
 支持多种实验类型：
 - latency: 端到端延迟测试
+- malicious_vs_latency: 恶意节点比例与延迟关系测试
 - accuracy: 准确率测试（待实现）
 - scalability: 可扩展性测试（待实现）
 """
@@ -21,6 +22,7 @@ from ex.utils import import_helper
 
 # 导入实验模块
 from ex.experiments.latency import LatencyExperiment
+from ex.experiments.malicious_vs_latency import MaliciousVsLatencyExperiment
 
 
 def parse_args():
@@ -36,6 +38,12 @@ def parse_args():
   # 运行延迟实验（完整）
   python ex/main.py latency --config ex/configs/latency.yaml
 
+  # 运行恶意节点比例实验（快速测试）
+  python ex/main.py malicious_vs_latency --quick-test
+
+  # 运行恶意节点比例实验（完整）
+  python ex/main.py malicious_vs_latency --config ex/configs/malicious_vs_latency.yaml
+
   # 分析已有结果
   python ex/main.py latency --analyze ex/results/data/experiment_20250128.json
         """
@@ -44,15 +52,14 @@ def parse_args():
     parser.add_argument(
         'experiment_type',
         type=str,
-        choices=['latency', 'accuracy', 'scalability'],
+        choices=['latency', 'malicious_vs_latency', 'accuracy', 'scalability'],
         help='实验类型'
     )
 
     parser.add_argument(
         '--config',
         type=str,
-        default='ex/configs/latency.yaml',
-        help='配置文件路径'
+        help='配置文件路径（默认根据实验类型自动选择）'
     )
 
     parser.add_argument(
@@ -88,8 +95,29 @@ def main():
 
     # 根据实验类型创建实验实例
     if args.experiment_type == 'latency':
+        config_file = args.config if args.config else 'ex/configs/latency.yaml'
         experiment = LatencyExperiment(
-            config_file=args.config,
+            config_file=config_file,
+            output_dir=args.output_dir
+        )
+
+        if args.analyze:
+            # 分析已有结果
+            print(f"正在分析结果文件: {args.analyze}")
+            experiment.analyze_results(args.analyze)
+        else:
+            # 运行实验
+            if args.quick_test:
+                print("运行快速测试模式...")
+                experiment.run_quick_test()
+            else:
+                print("运行完整实验...")
+                experiment.run()
+
+    elif args.experiment_type == 'malicious_vs_latency':
+        config_file = args.config if args.config else 'ex/configs/malicious_vs_latency.yaml'
+        experiment = MaliciousVsLatencyExperiment(
+            config_file=config_file,
             output_dir=args.output_dir
         )
 

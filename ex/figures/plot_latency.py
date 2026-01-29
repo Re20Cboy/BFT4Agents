@@ -142,7 +142,6 @@ print("\n[1/4] 生成核心对比图...")
 try:
     plt.figure(figsize=(7, 5))
 
-    # 使用errorbar='sd'可能在新版seaborn中有问题，改用ci='sd'
     sns.lineplot(data=df_all[df_all['malicious_ratio'] == 0.0],
                  x='num_agents', y='total_latency', hue='type', style='type',
                  markers=True, dashes=False, palette='Set1',
@@ -183,36 +182,117 @@ try:
 except Exception as e:
     print(f"  [ERROR] 错误: {e}")
 
-# 3. 延迟占比饼图 (Latency Breakdown Pie Chart)
-print("\n[3/4] 生成延迟占比饼图...")
+# 3. 延迟成分占比分析 (Latency Composition Analysis)
+print("\n[3/4] 生成延迟成分占比分析图...")
 try:
-    # 选取 n=20, malicious_ratio=0.0 的情况
-    df_20 = df_llm[(df_llm['num_agents'] == 20) & (df_llm['malicious_ratio'] == 0.0)].mean(numeric_only=True)
-    df_20_base = df_base[(df_base['num_agents'] == 20) & (df_base['malicious_ratio'] == 0.0)].mean(numeric_only=True)
+    # 准备数据：计算不同配置下的延迟成分占比及标准差
+    composition_data = []
 
-    # 计算 LLM 纯推理延迟 (假设是 pre_prepare 的增量)
-    llm_inference = df_20['pre_prepare'] - df_20_base['pre_prepare']
-    consensus_overhead = df_20['prepare'] + df_20['commit']
-    other_overhead = df_20['total_latency'] - llm_inference - consensus_overhead
+    for llm_type in ['Ours (w/ LLM)', 'Baseline (Mock)']:
+        df_subset = df_all[df_all['type'] == llm_type]
 
-    plt.figure(figsize=(6, 6))
-    labels = ['LLM Inference', 'Consensus Protocol', 'Network & Others']
-    sizes = [llm_inference, consensus_overhead, other_overhead]
-    colors = ['#ff6b6b', '#4ecdc4', '#95e1d3']
-    explode = (0.1, 0, 0)
+        for n in [4, 7, 10, 20]:
+            for mal_ratio in [0.0, 0.14]:
+                df_filtered = df_subset[(df_subset['num_agents'] == n) &
+                                       (df_subset['malicious_ratio'] == mal_ratio)]
 
-    wedges, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%',
-                                         startangle=140, colors=colors,
-                                         explode=explode, shadow=True,
-                                         textprops={'fontweight': 'bold'})
+                if len(df_filtered) > 0:
+                    # 计算每个任务的延迟成分占比
+                    for _, row in df_filtered.iterrows():
+                        llm_time = row['pre_prepare']
+                        consensus_time = row['prepare'] + row['commit']
+                        total_time = row['total_latency']
+                        network_time = total_time - llm_time - consensus_time
+                        network_time = max(0, network_time)
 
-    # 美化百分比文本
-    for autotext in autotexts:
-        autotext.set_color('white')
-        autotext.set_fontsize(12)
-        autotext.set_fontweight('bold')
+                        pct_llm = (llm_time / total_time) * 100
+                        pct_consensus = (consensus_time / total_time) * 100
+                        pct_network = (network_time / total_time) * 100
 
-    plt.title('Latency Composition (n=20, w/ LLM)', fontweight='bold', pad=20)
+                        composition_data.append({
+                            'num_agents': n,
+                            'malicious_ratio': mal_ratio,
+                            'type': llm_type,
+                            'pct_llm': pct_llm,
+                            'pct_consensus': pct_consensus,
+                            'pct_network': pct_network
+                        })
+
+    df_comp = pd.DataFrame(composition_data)
+
+    # 调整配色（降低饱和度）
+    colors = {
+        'llm': '#d6604d',      # 红色 - 降低饱和度
+        'consensus': '#7ba3de', # 蓝色 - 降低饱和度
+        'network': '#63a775'    # 绿色 - 降低饱和度
+    }
+
+    # 创建图表 - 使用折线图+误差条（上下布局）
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 10))
+
+    # 子图1：诚实节点 - 折线图+误差条
+    df_honest = df_comp[(df_comp['malicious_ratio'] == 0.0)]
+    stats_honest = df_honest.groupby('num_agents').agg({
+        'pct_llm': ['mean', 'std'],
+        'pct_consensus': ['mean', 'std'],
+        'pct_network': ['mean', 'std']
+    }).reset_index()
+    stats_honest.columns = ['num_agents', 'llm_mean', 'llm_std', 'cons_mean', 'cons_std', 'net_mean', 'net_std']
+    stats_honest = stats_honest.sort_values('num_agents')
+
+    x1 = stats_honest['num_agents'].values
+
+    ax1.errorbar(x1, stats_honest['llm_mean'], yerr=stats_honest['llm_std'],
+                 marker='o', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['llm'], label='LLM Inference', alpha=0.8)
+    ax1.errorbar(x1, stats_honest['cons_mean'], yerr=stats_honest['cons_std'],
+                 marker='s', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['consensus'], label='Consensus Protocol', alpha=0.8)
+    ax1.errorbar(x1, stats_honest['net_mean'], yerr=stats_honest['net_std'],
+                 marker='^', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['network'], label='Network & Others', alpha=0.8)
+
+    ax1.set_xlabel('Number of Agents ($n$)', fontweight='bold')
+    ax1.set_ylabel('Percentage (%)', fontweight='bold')
+    ax1.set_title('(a) Honest Nodes (0% Malicious)', fontweight='bold')
+    ax1.set_xticks([4, 7, 10, 20])
+    ax1.legend(frameon=True, shadow=True, loc='upper right')
+    ax1.grid(True, linestyle='--', alpha=0.3)
+    ax1.set_ylim(0, 100)
+
+    # 子图2：恶意节点 - 折线图+误差条
+    df_malicious = df_comp[(df_comp['malicious_ratio'] == 0.14)]
+    stats_malicious = df_malicious.groupby('num_agents').agg({
+        'pct_llm': ['mean', 'std'],
+        'pct_consensus': ['mean', 'std'],
+        'pct_network': ['mean', 'std']
+    }).reset_index()
+    stats_malicious.columns = ['num_agents', 'llm_mean', 'llm_std', 'cons_mean', 'cons_std', 'net_mean', 'net_std']
+    stats_malicious = stats_malicious.sort_values('num_agents')
+
+    x2 = stats_malicious['num_agents'].values
+
+    ax2.errorbar(x2, stats_malicious['llm_mean'], yerr=stats_malicious['llm_std'],
+                 marker='o', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['llm'], label='LLM Inference', alpha=0.8)
+    ax2.errorbar(x2, stats_malicious['cons_mean'], yerr=stats_malicious['cons_std'],
+                 marker='s', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['consensus'], label='Consensus Protocol', alpha=0.8)
+    ax2.errorbar(x2, stats_malicious['net_mean'], yerr=stats_malicious['net_std'],
+                 marker='^', linewidth=2.5, markersize=8, capsize=4, capthick=2,
+                 color=colors['network'], label='Network & Others', alpha=0.8)
+
+    ax2.set_xlabel('Number of Agents ($n$)', fontweight='bold')
+    ax2.set_ylabel('Percentage (%)', fontweight='bold')
+    ax2.set_title('(b) Malicious Nodes (14% Malicious)', fontweight='bold')
+    ax2.set_xticks([4, 7, 10, 20])
+    ax2.legend(frameon=True, shadow=True, loc='upper right')
+    ax2.grid(True, linestyle='--', alpha=0.3)
+    ax2.set_ylim(0, 100)
+
+    plt.suptitle('Latency Composition Analysis (w/ LLM)',
+                fontsize=13, fontweight='bold')
+    plt.tight_layout()
 
     output_path = output_dir / 'latency_pie_chart.png'
     plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
@@ -220,6 +300,8 @@ try:
     print(f"  [OK] 已保存: {output_path.name}")
 except Exception as e:
     print(f"  [ERROR] 错误: {e}")
+    import traceback
+    traceback.print_exc()
 
 # 4. 生成统计对比表
 print("\n[4/4] 生成统计对比表...")
