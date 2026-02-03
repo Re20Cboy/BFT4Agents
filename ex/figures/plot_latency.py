@@ -140,19 +140,28 @@ print("="*70)
 # 1. 核心对比图：Ours vs. Baseline (Total Latency)
 print("\n[1/4] 生成核心对比图...")
 try:
-    plt.figure(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(7, 5))
 
-    sns.lineplot(data=df_all[df_all['malicious_ratio'] == 0.0],
-                 x='num_agents', y='total_latency', hue='type', style='type',
+    df_subset = df_all[df_all['malicious_ratio'] == 0.0]
+    sns.lineplot(data=df_subset, x='num_agents', y='total_latency', hue='type', style='type',
                  markers=True, dashes=False, palette='Set1',
-                 errorbar='sd', err_style='band', alpha=0.7)
+                 errorbar='sd', err_style='band', alpha=0.7, ax=ax)
 
-    plt.xlabel('Number of Agents ($n$)', fontweight='bold')
-    plt.ylabel('Total Latency (seconds)', fontweight='bold')
-    plt.title('Impact of LLM Inference on End-to-End Latency', fontweight='bold')
-    plt.legend(title='Experiment Setup', frameon=True, shadow=True)
-    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.grid(True, linestyle='--', alpha=0.3)
+    # 添加数值标注
+    for llm_type in df_subset['type'].unique():
+        data = df_subset[df_subset['type'] == llm_type].groupby('num_agents')['total_latency'].mean()
+        for x, y in data.items():
+            ax.annotate(f'{y:.1f}s', xy=(x, y), xytext=(0, 10),
+                       textcoords='offset points', ha='center', va='bottom',
+                       fontsize=9, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7, edgecolor='gray', linewidth=0.5))
+
+    ax.set_xlabel('Number of Agents ($n$)', fontweight='bold')
+    ax.set_ylabel('Total Latency (seconds)', fontweight='bold')
+    # 去掉标题
+    ax.legend(title='Experiment Setup', frameon=True, shadow=True)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.grid(True, linestyle='--', alpha=0.3)
 
     output_path = output_dir / 'comparison_llm_vs_baseline.png'
     plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
@@ -164,16 +173,17 @@ except Exception as e:
 # 2. 对数坐标系下的可扩展性分析 (Scalability in Log Scale)
 print("\n[2/4] 生成对数坐标系可扩展性分析...")
 try:
-    plt.figure(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(7, 5))
     sns.lineplot(data=df_all, x='num_agents', y='total_latency', hue='type',
                  style='malicious_ratio', markers=True, palette='Set1',
-                 alpha=0.8, linewidth=2)
-    plt.yscale('log')
-    plt.xlabel('Number of Agents ($n$)', fontweight='bold')
-    plt.ylabel('Total Latency (seconds, Log Scale)', fontweight='bold')
-    plt.title('Scalability Analysis (Log Scale)', fontweight='bold')
-    plt.legend(title='Type & Malicious Ratio', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True, linestyle='--', alpha=0.3, which='both')
+                 alpha=0.8, linewidth=2, ax=ax)
+    ax.set_yscale('log')
+    ax.set_xlabel('Number of Agents ($n$)', fontweight='bold')
+    ax.set_ylabel('Total Latency (seconds, Log Scale)', fontweight='bold')
+    # 去掉标题
+    # 图例放在图内左上角
+    ax.legend(title='Type & Malicious Ratio', frameon=True, shadow=True, loc='upper left', fontsize=9)
+    ax.grid(True, linestyle='--', alpha=0.3, which='both')
 
     output_path = output_dir / 'scalability_log_plot.png'
     plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
@@ -290,8 +300,7 @@ try:
     ax2.grid(True, linestyle='--', alpha=0.3)
     ax2.set_ylim(0, 100)
 
-    plt.suptitle('Latency Composition Analysis (w/ LLM)',
-                fontsize=13, fontweight='bold')
+    # 去掉总标题，保留子标题
     plt.tight_layout()
 
     output_path = output_dir / 'latency_pie_chart.png'
