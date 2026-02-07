@@ -1,0 +1,231 @@
+{
+  "description": "刁钻问题测试集 - 用于测试BFT4Agent协议的容错边界",
+  "note": "这些问题设计用于诱导LLM产生幻觉或理解偏差，即使诚实的agent也可能出错",
+  "tasks": [
+    {
+      "id": "tricky_001",
+      "content": "一个球拍和一个球总共卖1.10美元。球拍比球贵1.00美元。请问球多少钱？",
+      "type": "math_trap",
+      "difficulty": "easy",
+      "expected_answer": "0.05",
+      "expected_behavior": "correct",
+      "trap": "直觉答案是0.10美元，但正确答案是0.05美元（设球为x，则球拍为x+1，总价2x+1=1.10，x=0.05）"
+    },
+    {
+      "id": "tricky_002",
+      "content": "如果你有3个苹果，你拿走了2个，你现在有几个苹果？",
+      "type": "logic_trap",
+      "difficulty": "easy",
+      "expected_answer": "2",
+      "expected_behavior": "correct",
+      "trap": "直觉答案可能是1（剩下），但正确答案是2（你拿走的）"
+    },
+    {
+      "id": "tricky_003",
+      "content": "有些 months 有31天，有些有30天，请问有多少个月有28天？",
+      "type": "logic_trap",
+      "difficulty": "medium",
+      "expected_answer": "12",
+      "expected_behavior": "correct",
+      "trap": "直觉答案是1个（二月），但所有12个月都至少有28天"
+    },
+    {
+      "id": "tricky_004",
+      "content": "一个农场有100只鸡和狗，总共有260条腿。鸡有2条腿，狗有4条腿。请问有几只鸡，几只狗？",
+      "type": "math_trap",
+      "difficulty": "medium",
+      "expected_answer": "鸡70只，狗30只",
+      "expected_behavior": "correct",
+      "explanation": "设鸡x只，狗y只：x+y=100, 2x+4y=260，解得x=70, y=30"
+    },
+    {
+      "id": "tricky_005",
+      "content": "如果昨天比前天的明天早两天，今天是周五，请问后天是周几？",
+      "type": "logic_complex",
+      "difficulty": "hard",
+      "expected_answer": "周一",
+      "expected_behavior": "correct",
+      "explanation": "今天是周五，后天是周日。但这是陷阱题，需要仔细分析时间逻辑"
+    },
+    {
+      "id": "tricky_006",
+      "content": "一个蜗牛掉进20米深的井里，每天白天爬上3米，晚上滑下2米。请问蜗牛几天能爬出井？",
+      "type": "math_trap",
+      "difficulty": "medium",
+      "expected_answer": "18天",
+      "expected_behavior": "correct",
+      "trap": "直觉答案是20天（每天净升1米），但最后一天白天就能爬出不需要滑下。前17天爬17米，第18天白天爬3米到20米"
+    },
+    {
+      "id": "tricky_007",
+      "content": "如果你正在参加一场赛跑，你超过了第二名，请问你现在第几名？",
+      "type": "logic_trap",
+      "difficulty": "easy",
+      "expected_answer": "第二名",
+      "expected_behavior": "correct",
+      "trap": "直觉答案是第一名，但超过第二名后你取代了他的位置成为第二名"
+    },
+    {
+      "id": "tricky_008",
+      "content": "一个钟表6点敲6下，需要30秒。请问12点敲12下需要多少秒？",
+      "type": "math_trap",
+      "difficulty": "medium",
+      "expected_answer": "66秒",
+      "expected_behavior": "correct",
+      "trap": "6下有5个间隔，每个间隔6秒。12下有11个间隔，需要66秒"
+    },
+    {
+      "id": "tricky_009",
+      "content": "一个盒子里面有红、蓝、绿三种颜色的球，每种颜色至少有一个。如果任意取出两个球，颜色相同的概率是多少？",
+      "type": "probability",
+      "difficulty": "hard",
+      "expected_answer": "需要知道每种颜色球的数量",
+      "expected_behavior": "reject",
+      "trap": "这是一个条件不足的问题，正确的agent应该识别出信息不足"
+    },
+    {
+      "id": "tricky_010",
+      "content": "一个数的平方等于它自己加上6，请问这个数是多少？",
+      "type": "math_equation",
+      "difficulty": "medium",
+      "expected_answer": "3或-2",
+      "expected_behavior": "correct",
+      "explanation": "x² = x + 6 → x² - x - 6 = 0 → (x-3)(x+2) = 0 → x=3或x=-2"
+    },
+    {
+      "id": "tricky_011",
+      "content": "有5个海盗抢了100枚金币，按等级从高到低分配。最高等级的海盗提出分配方案，所有人（包括提案者）投票。如果赞成票≥50%，方案通过；否则提案者被扔进海里，下一等级继续。假设所有海盗都是绝对理性的，第一个海盗应该怎么分配？",
+      "type": "game_theory",
+      "difficulty": "hard",
+      "expected_answer": "给1、3、5号海盗各1枚，自己97枚",
+      "expected_behavior": "correct",
+      "explanation": "这是经典的海盗分金问题，需要用逆向递推法求解"
+    },
+    {
+      "id": "tricky_012",
+      "content": "小明有5个苹果，吃了3个，又买了8个，然后送给小红一半。请问小明现在有几个苹果？",
+      "type": "math_sequence",
+      "difficulty": "easy",
+      "expected_answer": "5",
+      "expected_behavior": "correct",
+      "explanation": "5-3+8=10，送给小红一半后剩5个"
+    },
+    {
+      "id": "tricky_013",
+      "content": "一个完全对称的骰子，六个面分别标有1-6个点。请问任意两个相邻面的点数之和可能相等吗？",
+      "type": "logic_spatial",
+      "difficulty": "medium",
+      "expected_answer": "不可能",
+      "expected_behavior": "correct",
+      "explanation": "骰子相对的面点数和为7（1-6, 2-5, 3-4），相邻面的和不可能是7，但可以不同"
+    },
+    {
+      "id": "tricky_014",
+      "content": "请证明：所有正整数都是有趣的。如果某个数无趣，那么这就是它的有趣之处。",
+      "type": "logic_paradox",
+      "difficulty": "hard",
+      "expected_answer": "这是一个逻辑悖论/幽默论证",
+      "expected_behavior": "correct",
+      "trap": "这不是一个严格的数学问题，而是一个哲学性或幽默性的陈述"
+    },
+    {
+      "id": "tricky_015",
+      "content": "一个有理数加上一个无理数，结果是有理数还是无理数？",
+      "type": "math_theory",
+      "difficulty": "medium",
+      "expected_answer": "无理数",
+      "expected_behavior": "correct",
+      "explanation": "假设有理数a，无理数b，若a+b=c是有理数，则b=c-a也是有理数，矛盾"
+    },
+    {
+      "id": "tricky_016",
+      "content": "你被困在一个房间里，有两扇门和两个守卫。一扇门通向自由，另一扇通向死亡。一个守卫总是说真话，另一个总是说假话，但你不知道哪个是哪个。你可以问一个守卫一个问题，应该怎么问才能找到通向自由的门？",
+      "type": "logic_puzzle",
+      "difficulty": "hard",
+      "expected_answer": "问任意一个守卫：如果我问另一个守卫哪扇门通向自由，他会指哪扇门？然后走相反的门",
+      "expected_behavior": "correct",
+      "explanation": "这是经典的真话守卫问题，利用双重否定逻辑"
+    },
+    {
+      "id": "tricky_017",
+      "content": "一个人在沙滩上走了2小时，每小时3公里。但他只在沙滩上留下了4公里的脚印。为什么？",
+      "type": "lateral_thinking",
+      "difficulty": "medium",
+      "expected_answer": "因为他在原路返回，或者最后一段路是走进海里",
+      "expected_behavior": "correct",
+      "trap": "这不是一个纯数学问题，需要创造性思维"
+    },
+    {
+      "id": "tricky_018",
+      "content": "有10个箱子，每个箱子有10个球，每个球重10克。但有一个箱子的球每个重9克。你有一个电子秤，只能称一次，怎么找出哪个箱子的球是轻的？",
+      "type": "math_clever",
+      "difficulty": "hard",
+      "expected_answer": "从第1箱取1个，第2箱取2个...第10箱取10个球一起称，总重量少的克数就是箱子号",
+      "expected_behavior": "correct",
+      "explanation": "正常应该重550克，如果少3克就是第3箱的问题"
+    },
+    {
+      "id": "tricky_019",
+      "content": "请计算：√(16) + √(9) = ?（注意：√表示算术平方根，只取正值）",
+      "type": "math_basic",
+      "difficulty": "easy",
+      "expected_answer": "7",
+      "expected_behavior": "correct",
+      "trap": "有些模型可能错误地认为√(16)=±4"
+    },
+    {
+      "id": "tricky_020",
+      "content": "一个班有30个学生，其中20个学英语，15个学法语，5个两个都不学。请问两个都学的学生有多少个？",
+      "type": "set_theory",
+      "difficulty": "medium",
+      "expected_answer": "10个",
+      "expected_behavior": "correct",
+      "explanation": "用容斥原理：|E∪F| = |E| + |F| - |E∩F|，25=20+15-|E∩F|，|E∩F|=10"
+    },
+    {
+      "id": "tricky_021",
+      "content": "一条船在海上漏水，每小时进水量足以使船在12小时后沉没。水泵每小时可以抽出够船漂浮20小时的水量。如果船已经漏水了3小时，还需要多久船会沉没？",
+      "type": "math_word_problem",
+      "difficulty": "hard",
+      "expected_answer": "18小时",
+      "expected_behavior": "correct",
+      "explanation": "净进水速度为1/12-1/20=1/30，即30小时沉没。已漏水3小时，还剩18小时（假设线性）"
+    },
+    {
+      "id": "tricky_022",
+      "content": "有一个数，它既是2的倍数，又是3的倍数，还是5的倍数，且小于100。这个数最大是多少？",
+      "type": "math_lcm",
+      "difficulty": "medium",
+      "expected_answer": "90",
+      "expected_behavior": "correct",
+      "explanation": "2、3、5的最小公倍数是30，小于100的30的倍数最大是90"
+    },
+    {
+      "id": "tricky_023",
+      "content": "小明说：'我在说谎'。请问小明是在说真话还是谎话？",
+      "type": "logic_paradox",
+      "difficulty": "hard",
+      "expected_answer": "这是一个说谎者悖论，无法判定",
+      "expected_behavior": "reject",
+      "explanation": "如果是真话，那他在说谎；如果是谎话，那他在说真话。这是经典的逻辑悖论"
+    },
+    {
+      "id": "tricky_024",
+      "content": "一个圆的半径增加100%，面积增加百分之多少？",
+      "type": "math_geometry",
+      "difficulty": "medium",
+      "expected_answer": "300%",
+      "expected_behavior": "correct",
+      "trap": "直觉可能是100%，但面积与半径的平方成正比，2²=4，增加了300%"
+    },
+    {
+      "id": "tricky_025",
+      "content": "一架飞机从北京飞往纽约需要13小时，返回需要14小时。为什么？",
+      "type": "general_knowledge",
+      "difficulty": "easy",
+      "expected_answer": "因为盛行西风（逆风飞行）",
+      "expected_behavior": "correct",
+      "trap": "这不是数学问题，需要地理知识"
+    }
+  ]
+}
