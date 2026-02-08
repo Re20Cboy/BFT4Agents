@@ -14,6 +14,37 @@ import os
 import argparse
 from pathlib import Path
 
+# 加载.env文件（从多个可能的位置）
+def load_env_file():
+    """从多个可能的位置加载.env文件"""
+    env_paths = [
+        Path(__file__).parent / '.env',  # ex/.env
+        Path(__file__).parent.parent / '.env',  # 项目根目录/.env
+        Path(__file__).parent.parent / 'bft4agent-simple' / '.env',  # bft4agent-simple/.env
+    ]
+
+    for env_path in env_paths:
+        if env_path.exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_path)
+                print(f"[Config] 已加载环境变量配置: {env_path}")
+                return True
+            except ImportError:
+                # 如果没有dotenv库，手动解析
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, value = line.split('=', 1)
+                            os.environ[key.strip()] = value.strip()
+                print(f"[Config] 已加载环境变量配置: {env_path} (手动解析)")
+                return True
+    return False
+
+# 加载环境变量
+load_env_file()
+
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)

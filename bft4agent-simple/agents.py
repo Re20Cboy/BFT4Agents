@@ -21,6 +21,7 @@ class Agent:
         llm_caller: Optional[Callable] = None,
         role_config: Optional[Dict] = None,  # 专业领域角色配置
         malicious_peers: Optional[List[str]] = None,  # 恶意同伙列表
+        malicious_answers_config: Optional[Dict] = None,  # 恶意节点的硬编码错误答案
     ):
         """
         initAgent
@@ -33,12 +34,16 @@ class Agent:
             llm_caller: LLM调用函数
             role_config: 专业领域角色配置（如：数学专家、逻辑分析师等）
             malicious_peers: 恶意同伙的ID列表（用于协同攻击）
+            malicious_answers_config: 恶意节点的硬编码错误答案配置
         """
         self.id = agent_id
         self.role = role  # BFT协议角色：leader/backup
         self.reputation = reputation
         self.is_malicious = is_malicious
         self.llm_caller = llm_caller
+
+        # 恶意答案配置（用于恶意节点生成固定的错误答案）
+        self.malicious_answers_config = malicious_answers_config or {}
 
         # 专业领域角色配置
         self.role_config = role_config or {}
@@ -73,8 +78,12 @@ class Agent:
             raise ValueError(f"Agent {self.id} is not a leader")
 
         # === 恶意leader策略：故意生成错误答案 ===
+        print(f"[PROPOSE DEBUG] Agent {self.id}, is_malicious={self.is_malicious}, role={self.role}")
         if self.is_malicious:
+            print(f"[PROPOSE DEBUG] 调用恶意提案逻辑 _malicious_propose")
             return self._malicious_propose(task)
+        else:
+            print(f"[PROPOSE DEBUG] 调用诚实提案逻辑（使用LLM）")
 
         # 诚实leader的正常逻辑
         # 构建带有角色信息的prompt
@@ -212,37 +221,65 @@ class Agent:
         """
         恶意leader的提案生成策略
 
-        策略：故意生成错误答案，但看起来要合理（难以被直接识别）
+        策略：使用配置中硬编码的错误答案，100%确保答案错误
+        跳过LLM调用，直接返回预设的错误答案
         """
-        # 构建prompt
-        prompt = self._build_generation_prompt(task["content"])
+        # ========== 详细调试输出 ==========
+        print(f"\n{'='*80}")
+        print(f"[恶意Leader调试] 任务内容分析")
+        print(f"{'='*80}")
+        print(f"Task的所有字段:")
+        for key, value in task.items():
+            print(f"  [{key}]: {value}")
+        print(f"{'='*80}\n")
+        # ========================================
 
-        # 如果有LLM，先获取正确答案（用于推理链路），然后强制修改为错误答案
-        if self.llm_caller:
-            # 先获取正确答案和推理链路
-            reasoning, correct_answer = self.llm_caller.generate(prompt)
-            # 强制将正确答案修改为错误答案
-            answer = self._corrupt_answer(correct_answer)
-            reasoning.append("故意修改答案为错误结果")
+        # 从task中提取问题ID - 修复：从'id'字段而不是'task_id'字段读取
+        real_task_id = task.get("id", "")  # 实际的字段名是'id'
+        task_id_for_proposal = task.get("task_id", real_task_id)  # 用于proposal的task_id
+        task_content = task.get("content", "")
+
+        print(f"[DEBUG] real_task_id (from 'id' field) = '{real_task_id}'")
+        print(f"[DEBUG] task_id_for_proposal = '{task_id_for_proposal}'")
+        print(f"[DEBUG] task_content前100字符 = '{task_content[:100]}'")
+
+        # 直接使用real_task_id作为question_id
+        question_id = real_task_id
+
+        print(f"[DEBUG] 最终question_id = '{question_id}'")
+
+        # 从配置中获取错误答案
+        wrong_answer = None
+        if question_id and question_id in self.malicious_answers_config:
+            wrong_answer = self.malicious_answers_config[question_id]
+            print(f"[恶意Leader {self.id}] 使用硬编码错误答案 [{question_id}]: {wrong_answer}")
+        elif "default_wrong_answer" in self.malicious_answers_config:
+            wrong_answer = self.malicious_answers_config["default_wrong_answer"]
+            print(f"[恶意Leader {self.id}] 使用默认错误答案: {wrong_answer}")
         else:
-            # 简单模拟：生成错误答案
-            reasoning = ["分析问题", "计算result", "故意制造错误"]
-            # 获取正确答案，然后修改它
-            correct_answer = self._mock_answer(task["content"])
-            answer = self._corrupt_answer(correct_answer)
+            # 如果配置中没有，使用一个通用的错误答案
+            wrong_answer = "我不知道"
+            print(f"[恶意Leader {self.id}] 使用备用错误答案: {wrong_answer}")
+
+        # 生成假的推理链路（让恶意答案看起来更合理）
+        reasoning = [
+            f"分析问题: {task_content[:50]}...",
+            "应用解题策略",
+            f"得出答案: {wrong_answer}"
+        ]
 
         proposal = {
-            "task_id": task.get("task_id", f"task_{int(time.time())}"),
-            "task_content": task.get("content", ""),  # 添加原始问题内容
+            "task_id": task_id_for_proposal,
+            "task_content": task_content,  # 添加原始问题内容
             "leader_id": self.id,
             "reasoning": reasoning,
-            "answer": answer,
+            "answer": wrong_answer,
             "confidence": 0.95,  # 保持高置信度以迷惑其他节点
             "timestamp": time.time(),
             "leader_specialty": self.specialty,
         }
 
-        print(f"[恶意Leader {self.id}] 生成了错误答案: {answer}")
+        print(f"[恶意Leader {self.id}] 生成了错误答案: {wrong_answer}")
         return proposal
 
     def _corrupt_answer(self, correct_answer: str) -> str:

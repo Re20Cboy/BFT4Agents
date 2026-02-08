@@ -226,6 +226,15 @@
       "expected_answer": "因为盛行西风（逆风飞行）",
       "expected_behavior": "correct",
       "trap": "这不是数学问题，需要地理知识"
+    },
+    {
+      "id": "tricky_026",
+      "content": "一个5.5米长的竹竿能不能通过长4米宽3米的门？",
+      "type": "general_knowledge",
+      "difficulty": "medium",
+      "expected_answer": "能，因为在空间上，竹竿可以斜成一个点，从门通过",
+      "expected_behavior": "correct",
+      "trap": "这是数学和常识类问题，需要空间想象能力"
     }
   ]
 }

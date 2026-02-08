@@ -340,6 +340,23 @@ class BFT4AgentWithLatency(BFT4Agent):
         # 生成提案
         proposal = primary_replica.agent.propose(task)
 
+        # 打印提案详细内容
+        print(f"\n{'='*80}")
+        print(f"[Leader提案内容] {primary_id}")
+        print(f"{'='*80}")
+        print(f"问题ID: {proposal.get('task_id', 'N/A')}")
+        print(f"问题内容: {proposal.get('task_content', 'N/A')[:100]}...")
+        print(f"Leader答案: {proposal.get('answer', 'N/A')}")
+        print(f"推理过程:")
+        reasoning = proposal.get('reasoning', [])
+        if isinstance(reasoning, list):
+            for i, step in enumerate(reasoning, 1):
+                print(f"  {i}. {step}")
+        else:
+            print(f"  {reasoning}")
+        print(f"置信度: {proposal.get('confidence', 'N/A')}")
+        print(f"{'='*80}\n")
+
         # 创建PRE-PREPARE消息
         pre_prepare_msg = PrePrepareMessage(
             view=self.current_view,

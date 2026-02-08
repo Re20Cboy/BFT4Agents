@@ -30,21 +30,46 @@ from ex.utils import import_helper, Plotter
 from ex.experiments.latency.consensus import BFT4AgentWithLatency
 
 
-def expand_env_vars(config_value: Any) -> Any:
+def expand_env_vars(config_value: Any, _warned_vars: set = None) -> Any:
     """
     递归展开配置中的环境变量
     支持 ${VAR_NAME} 格式
+
+    Args:
+        config_value: 配置值（可以是字符串、字典或列表）
+        _warned_vars: 内部使用的已警告变量集合（防止重复警告）
+
+    Returns:
+        展开后的配置值
     """
+    if _warned_vars is None:
+        _warned_vars = set()
+
     if isinstance(config_value, str):
         def replace_env_var(match):
             var_name = match.group(1)
-            return os.environ.get(var_name, match.group(0))
+            value = os.environ.get(var_name)
+            if value is None:
+                # 环境变量不存在，保持原样并警告
+                if var_name not in _warned_vars:
+                    print(f"[WARNING] 环境变量 '{var_name}' 未定义，配置值 '{match.group(0)}' 无法展开")
+                    _warned_vars.add(var_name)
+                return match.group(0)
+            return value
 
-        return re.sub(r'\$\{([^}]+)\}', replace_env_var, config_value)
+        result = re.sub(r'\$\{([^}]+)\}', replace_env_var, config_value)
+
+        # 检查是否还有未展开的环境变量
+        if re.search(r'\$\{[^}]+\}', result):
+            if result not in _warned_vars:
+                print(f"[WARNING] 配置值中包含未展开的环境变量: {result}")
+                _warned_vars.add(result)
+
+        return result
     elif isinstance(config_value, dict):
-        return {k: expand_env_vars(v) for k, v in config_value.items()}
+        return {k: expand_env_vars(v, _warned_vars) for k, v in config_value.items()}
     elif isinstance(config_value, list):
-        return [expand_env_vars(item) for item in config_value]
+        return [expand_env_vars(item, _warned_vars) for item in config_value]
     else:
         return config_value
 
@@ -68,31 +93,52 @@ class FaultToleranceExperiment:
 
     def _load_config(self) -> Dict:
         """加载配置文件"""
-        if self.config_file and os.path.exists(self.config_file):
-            with open(self.config_file, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f)
-        else:
-            # 默认配置
-            return {
-                'experiment_name': 'fault_tolerance_boundary_test',
-                'description': '测试BFT4Agent协议在面对刁钻问题时的容错边界',
-                'variables': {
-                    'num_agents': [9],  # 固定9个节点（满足3f+1）
-                    'malicious_count': [0, 1, 2, 3],  # 0%, 11%, 22%, 33%
-                    'leader_type': ['honest', 'malicious'],  # 测试两种leader
-                    'network_delay': [[10, 100]],
-                    'llm_backend': ['qwen']  # 使用真实LLM
+        if self.config_file:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
+                print(f"[Config] 已加载配置文件: {self.config_file}")
+                return config
+            else:
+                print(f"\n[WARNING] 配置文件不存在: {self.config_file}")
+                print(f"[INFO] 将使用默认配置运行实验\n")
+                # 继续使用默认配置
+
+        # 默认配置
+        return {
+            'experiment_name': 'fault_tolerance_boundary_test',
+            'description': '测试BFT4Agent协议在面对刁钻问题时的容错边界',
+            'variables': {
+                'num_agents': [9],  # 固定9个节点（满足3f+1）
+                'malicious_count': [0, 1, 2, 3],  # 0%, 11%, 22%, 33%
+                'leader_type': ['honest', 'malicious'],  # 测试两种leader
+                'network_delay': [[10, 100]],
+                'llm_backend': ['qwen']  # 使用真实LLM
+            },
+            'tasks': {
+                'file': 'tricky_questions.json',  # 专门的刁钻问题数据集
+                'num_tasks': 5,
+                'shuffle': True
+            },
+            'global': {
+                'timeout': 60.0,  # 真实LLM需要更长超时
+                'max_retries': 10,  # 允许更多重试
+            },
+            'llm_api_config': {
+                'qwen': {
+                    'api_key': '${QWEN_API_KEY}',
+                    'app_id': '${QWEN_APP_ID}'
                 },
-                'tasks': {
-                    'file': 'tricky_questions.json',  # 专门的刁钻问题数据集
-                    'num_tasks': 5,
-                    'shuffle': True
+                'zhipu': {
+                    'api_key': '${ZHIPU_API_KEY}',
+                    'model': 'glm-4-plus'
                 },
-                'global': {
-                    'timeout': 60.0,  # 真实LLM需要更长超时
-                    'max_retries': 10,  # 允许更多重试
+                'openai': {
+                    'api_key': '${OPENAI_API_KEY}',
+                    'model': 'gpt-4'
                 }
             }
+        }
 
     def run(self):
         """运行完整实验"""
@@ -173,23 +219,41 @@ class FaultToleranceExperiment:
                 random_assignment=True
             )
 
+            # 将恶意答案配置注入到所有agent中（包括诚实和恶意agent）
+            # 这样恶意agent可以使用这些硬编码的错误答案
+            malicious_answers = self.config.get('malicious_answers', {})
+            for agent in agents:
+                agent.malicious_answers_config = malicious_answers
+
             # 如果需要确保leader是诚实/恶意的，强制设置第一个agent
+            print(f"\n[DEBUG] Leader类型要求: {leader_type}")
+            print(f"[DEBUG] 设置前 agents[0].is_malicious: {agents[0].is_malicious}")
+
             if leader_type == 'malicious' and not agents[0].is_malicious:
                 # 将第一个agent设为恶意，并调整其他agent
                 agents[0].is_malicious = True
+                print(f"[DEBUG] 强制设置 agents[0].is_malicious = True")
                 # 从诚实agent中随机选一个改为恶意以保持总数
                 for i in range(1, len(agents)):
                     if not agents[i].is_malicious:
                         agents[i].is_malicious = False
+                        print(f"[DEBUG] 设置 agents[{i}].is_malicious = False 以保持恶意节点总数")
                         break
             elif leader_type == 'honest' and agents[0].is_malicious:
                 # 将第一个agent设为诚实，并调整其他agent
                 agents[0].is_malicious = False
+                print(f"[DEBUG] 强制设置 agents[0].is_malicious = False")
                 # 从恶意agent中随机选一个改为诚实以保持总数
                 for i in range(1, len(agents)):
                     if agents[i].is_malicious:
                         agents[i].is_malicious = True
+                        print(f"[DEBUG] 设置 agents[{i}].is_malicious = True 以保持恶意节点总数")
                         break
+
+            print(f"[DEBUG] 设置后 agents[0].is_malicious: {agents[0].is_malicious}")
+            print(f"[DEBUG] agents[0].malicious_answers_config存在: {hasattr(agents[0], 'malicious_answers_config')}")
+            if hasattr(agents[0], 'malicious_answers_config'):
+                print(f"[DEBUG] malicious_answers_config内容: {agents[0].malicious_answers_config}")
 
             # 创建网络
             network = import_helper.Network(delay_range=network_delay, packet_loss=0.01)
@@ -412,6 +476,26 @@ class FaultToleranceExperiment:
                 'timeout': 30.0,
                 'max_retries': 5,
                 'mock_accuracy': 0.7  # Mock LLM准确率较低，模拟刁钻问题
+            },
+            # 添加恶意答案配置，以便在恶意leader场景中使用
+            'malicious_answers': {
+                "tricky_001": "0.10",
+                "tricky_002": "1",
+                "tricky_003": "1",
+                "tricky_004": "鸡50只，狗50只",
+                "tricky_006": "20天",
+                "tricky_008": "60秒",
+                "tricky_010": "3",
+                "tricky_012": "10",
+                "tricky_013": "可能相等",
+                "tricky_015": "有理数",
+                "tricky_005": "周六",
+                "tricky_007": "第一名",
+                "tricky_014": "这是一个严格的数学问题",
+                "tricky_016": "直接问：哪扇门通向自由？",
+                "tricky_009": "1/3",
+                "tricky_011": "每人20枚",
+                "default_wrong_answer": "我不知道"
             }
         }
         self.config['quick_test'] = True
