@@ -66,14 +66,20 @@ logs/
 *.csv
 *.json.bak
 
+# Experiments (entire ex folder)
+ex/
+
 # Experiment Output
 ex/results/data/
 ex/results/figures/
+ex/figures/
 ex/**/experiment_*.json
 ex/**/experiment_latest.json
 ex/**/*.png
 ex/**/*.jpg
 ex/**/*.jpeg
+ex/**/*.pdf
+ex/**/visualize_*.py
 
 # Experiment Temporary Files
 ex/**/experiment_broken.py
@@ -111,3 +117,5 @@ desktop.ini
 *.cache
 .sessioninfo
 nul
+ex/experiments/fault_tolerance/visualize_results.py
+
